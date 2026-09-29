@@ -140,6 +140,7 @@ Panel {
         spacing: Style.space(22)
 
         Text {
+          id: heroText
           width: parent.width
           wrapMode: Text.WordWrap
           horizontalAlignment: Text.AlignHCenter
@@ -149,6 +150,26 @@ Panel {
           font.pixelSize: 22
           font.bold: true
           lineHeight: 1.15
+
+          // A quick fade so a new line arrives rather than snapping in.
+          // Runs on open, on "Another", on category change, and when the
+          // user adds their own line (which sets currentLine as confirmation).
+          NumberAnimation {
+            id: lineFade
+            target: heroText
+            property: "opacity"
+            from: 0.0
+            to: 1.0
+            duration: 160
+            easing.type: Easing.OutCubic
+          }
+          Connections {
+            target: root
+            function onCurrentLineChanged() {
+              heroText.opacity = 0.0
+              lineFade.restart()
+            }
+          }
         }
 
         // ---- Category chips
