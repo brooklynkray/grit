@@ -1,13 +1,15 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 import "Model.js" as Model
 
-// Grit's popup: one motivation line, big and centred, a row of category
-// chips to choose the mood, and an "Another" button. Modelled on the clock's
-// Panel (Panel hosting a KeyboardPanel). Colours and fonts come from the bar,
-// so it matches the user's theme.
+// Grit's popup: one motivation line, category chips, an "Another" button, and
+// an "add your own" field. Built-in lines come from Model.js; the user's own
+// lines are read from and written to ~/.local/state/omarchy/grit-custom.json
+// (the state dir, so a plugin update never clobbers them). Modelled on the
+// clock's Panel and the clipboard plugin's FileView usage.
 Panel {
   id: root
   moduleName: "brooklynkray.grit"
@@ -22,25 +24,69 @@ Panel {
   property string currentLine: ""
   property string lastLine: ""
 
-  // Popout-switch handshake, mirrored from the bar-widget contract.
+  // The user's own lines, loaded from disk. Private, local, survives updates.
+  property var customLines: []
+  property bool editingCustom: false
+  readonly property string customPath: Quickshell.env("HOME") + "/.local/state/omarchy/grit-custom.json"
+
   property bool popoutSwitchClosing: false
   function closeForPopoutSwitch() { root.close() }
 
-  // Guarded so the panel renders before the bar is injected.
   readonly property color contentForeground: bar ? bar.foreground : Color.foreground
   readonly property string contentFontFamily: bar ? bar.fontFamily : Style.font.family
 
-  // "Surprise me" (all lines) first, then one chip per category.
+  // ---- Custom line storage ----------------------------------------------
+  function loadCustom(txt) {
+    try {
+      var parsed = JSON.parse(txt)
+      root.customLines = Array.isArray(parsed) ? parsed : []
+    } catch (e) {
+      root.customLines = []
+    }
+  }
+
+  function saveCustom() {
+    customFile.setText(JSON.stringify(root.customLines, null, 2) + "\n")
+  }
+
+  function addCustom(text) {
+    var line = String(text).replace(/^\s+|\s+$/g, "")
+    if (line === "") return
+    var list = root.customLines.slice()
+    if (list.indexOf(line) === -1) list.push(line)
+    root.customLines = list
+    saveCustom()
+    addField.text = ""
+    // Show what was just added, as confirmation.
+    root.currentLine = line
+    root.lastLine = line
+  }
+
+  FileView {
+    id: customFile
+    path: root.customPath
+    watchChanges: true
+    atomicWrites: true
+    printErrors: false
+    onLoaded: root.loadCustom(text())
+    onLoadFailed: root.loadCustom("[]")
+    onFileChanged: reload()
+  }
+
+  // ---- Categories --------------------------------------------------------
   readonly property var chipModel: buildChips()
   function buildChips() {
     var m = [{ id: "all", name: "Surprise me" }]
     for (var i = 0; i < Model.CATEGORIES.length; i++)
       m.push({ id: Model.CATEGORIES[i].id, name: Model.CATEGORIES[i].name })
+    if (root.customLines.length > 0) m.push({ id: "yours", name: "Yours" })
     return m
   }
 
   function poolForActive() {
-    return root.activeCategoryId === "all" ? Model.allLines() : Model.linesFor(root.activeCategoryId)
+    if (root.activeCategoryId === "all") return Model.allLines().concat(root.customLines)
+    if (root.activeCategoryId === "yours") return root.customLines
+    return Model.linesFor(root.activeCategoryId)
   }
 
   function newLine() {
@@ -58,7 +104,7 @@ Panel {
     if (root.currentLine === "") newLine()
     root.controller.show()
   }
-  function close() { root.controller.hide() }
+  function close() { root.editingCustom = false; root.controller.hide() }
   function toggle() { if (root.opened) root.close(); else root.open() }
 
   function switchPanel(direction) {
@@ -81,9 +127,10 @@ Panel {
     PanelKeyCatcher {
       id: keyCatcher
       anchors.fill: parent
+      // While typing a custom line, let the text field have the keys.
+      blocked: root.editingCustom
       onCloseRequested: root.close()
       onTabRequested: function(direction) { root.switchPanel(direction) }
-      // Space or N gives you another line without reaching for the mouse.
       onTextKey: function(t) { if (t === " " || t === "n" || t === "N") root.newLine() }
 
       Column {
@@ -104,7 +151,7 @@ Panel {
           lineHeight: 1.15
         }
 
-        // ---- Category chips. Wraps to as many rows as it needs.
+        // ---- Category chips
         Flow {
           width: parent.width
           spacing: Style.space(8)
@@ -177,6 +224,49 @@ Panel {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.newLine()
+          }
+        }
+
+        // ---- Add your own
+        Text {
+          anchors.horizontalCenter: parent.horizontalCenter
+          visible: !root.editingCustom
+          text: "+ add your own"
+          color: addMouse.containsMouse
+            ? Style.hoverStateColor(root.contentForeground, Color.accent)
+            : Qt.darker(root.contentForeground, 1.5)
+          font.family: root.contentFontFamily
+          font.pixelSize: 12
+
+          MouseArea {
+            id: addMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+              root.editingCustom = true
+              Qt.callLater(function() { addField.forceActiveFocus() })
+            }
+          }
+        }
+
+        TextField {
+          id: addField
+          visible: root.editingCustom
+          width: parent.width
+          placeholderText: "Write your own line, then press Enter"
+          foreground: root.contentForeground
+          font.family: root.contentFontFamily
+
+          Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+              root.addCustom(addField.text)
+              event.accepted = true
+            } else if (event.key === Qt.Key_Escape) {
+              addField.text = ""
+              root.editingCustom = false
+              event.accepted = true
+            }
           }
         }
       }
