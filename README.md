@@ -64,6 +64,15 @@ omarchy plugin add https://github.com/brooklynkray/grit --enable
 
 Then add the Grit widget to your bar.
 
+## Remove
+
+```bash
+omarchy plugin remove brooklynkray.grit
+```
+
+Your own lines in `~/.local/state/omarchy/grit-custom.json` are left untouched on removal, so reinstalling picks them straight back up. Delete that file by hand if you want them gone too.
+
+
 ## Usage
 
 Click the Grit button in the bar for a line. Click **Another** for the next one. Switch category from the chips in the panel. **Surprise me** pulls from every category, including your own lines.
