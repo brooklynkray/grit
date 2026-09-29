@@ -137,7 +137,34 @@ Panel {
         id: body
         anchors.centerIn: parent
         width: Style.space(440)
-        spacing: Style.space(22)
+        spacing: Style.space(16)
+
+        // Wordmark logo: GRIT in heavy caps with an accent bar drawn beneath,
+        // the design we settled on. The bar uses the theme accent so it
+        // recolours to match whatever theme the plugin is installed under.
+        Column {
+          anchors.horizontalCenter: parent.horizontalCenter
+          spacing: Style.space(6)
+
+          Text {
+            id: wordmarkText
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: "GRIT"
+            color: root.contentForeground
+            font.family: root.contentFontFamily
+            font.pixelSize: 18
+            font.bold: true
+            font.letterSpacing: 2
+          }
+
+          Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: wordmarkText.implicitWidth
+            height: Style.space(4)
+            radius: Style.space(2)
+            color: Color.accent
+          }
+        }
 
         Text {
           width: parent.width
