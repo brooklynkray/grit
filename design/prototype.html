@@ -1,0 +1,316 @@
+<title>Grit</title>
+<style>
+  /* Layout: a dark desktop mock, slim bar up top with the Grit widget,
+     the motivation card floating centre stage. Deliberately single dark
+     world, since Grit is a dark desktop overlay. */
+  :root {
+    color-scheme: dark;
+    --bg: #0c0d11;          /* desktop ground, cool near-black */
+    --screen: #101218;      /* framed screen */
+    --bar: #15171f;         /* top bar */
+    --card: #171a22;        /* the panel */
+    --card-edge: #262a36;   /* hairline separators */
+    --fg: #f3f4f7;          /* primary text */
+    --muted: #8b909e;       /* secondary text */
+    --faint: #565b68;       /* tertiary / disabled */
+    --accent: #e8933a;      /* default ember accent, switchable below */
+    --accent-ink: #120d06;  /* text on accent */
+
+    --display: "Archivo", system-ui, sans-serif;
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    min-height: 100%;
+    padding: 16px;
+    padding-block: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* The framed "screen" */
+  .screen {
+    flex: 1;
+    min-height: 520px;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #171a24 0%, var(--screen) 55%, #0b0c11 100%);
+    border: 1px solid #23262f;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 60px -30px #000;
+  }
+
+  /* Top bar with the Grit widget */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    background: var(--bar);
+    border-bottom: 1px solid #20232c;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: #2c303b; display: block; }
+  .bar .clock { margin-left: auto; letter-spacing: 0.04em; }
+
+  .gritbtn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    color: var(--fg);
+    background: #1d2029;
+    border: 1px solid var(--card-edge);
+    padding: 5px 10px; border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .18s, background .18s;
+  }
+  .gritbtn:hover { border-color: var(--accent); }
+  .gritbtn .spark { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .gritbtn.live { border-color: var(--accent); background: #21242e; }
+
+  /* Stage holds the card */
+  .stage {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px 20px;
+  }
+
+  .card {
+    width: 100%; max-width: 440px;
+    background: var(--card);
+    border: 1px solid var(--card-edge);
+    border-radius: 18px;
+    padding: 26px 26px 22px;
+    box-shadow: 0 30px 80px -40px #000;
+    transform-origin: top center;
+  }
+  .card[hidden] { display: none; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card.enter { animation: pop .26s cubic-bezier(.2,.7,.3,1); }
+    @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
+    .line.swap { animation: fade .28s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  }
+
+  .card-head {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .card-head .spark { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .card-head .x { margin-left: auto; cursor: pointer; color: var(--faint); font-size: 15px; line-height: 1; letter-spacing: 0; }
+  .card-head .x:hover { color: var(--fg); }
+
+  .line {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    line-height: 1.16;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 22px;
+    min-height: 3.2em;
+    display: flex; align-items: center;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+  .chip {
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--card-edge);
+    padding: 5px 11px; border-radius: 999px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .chip:hover { color: var(--fg); border-color: var(--faint); }
+  .chip.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 500; }
+
+  .actions { display: flex; align-items: center; gap: 12px; }
+  .again {
+    font-family: var(--sans); font-weight: 600; font-size: 14px;
+    color: var(--accent-ink); background: var(--accent);
+    border: none; border-radius: 10px;
+    padding: 10px 18px; cursor: pointer;
+    transition: filter .15s, transform .05s;
+  }
+  .again:hover { filter: brightness(1.07); }
+  .again:active { transform: translateY(1px); }
+  .addhint { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+  /* Footer: accent swatches to show theme-matching */
+  .foot {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px;
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+  }
+  .foot .label { letter-spacing: 0.04em; }
+  .swatches { display: flex; gap: 8px; }
+  .sw { width: 20px; height: 20px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: transform .12s; }
+  .sw:hover { transform: scale(1.12); }
+  .sw.on { border-color: var(--fg); }
+  .note { margin-left: auto; color: var(--faint); }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+</style>
+
+<div class="wrap">
+  <div class="screen">
+    <div class="bar">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <button class="gritbtn live" id="gritbtn"><span class="spark"></span>GRIT</button>
+      <span class="clock" id="clock">21:47</span>
+    </div>
+
+    <div class="stage">
+      <div class="card enter" id="card">
+        <div class="card-head">
+          <span class="spark"></span>
+          <span>Grit</span>
+          <span class="x" id="closex" role="button" aria-label="Close" tabindex="0">✕</span>
+        </div>
+
+        <p class="line" id="line">You don't have to feel like it. You just have to start. Open the file.</p>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="actions">
+          <button class="again" id="again">Another</button>
+          <span class="addhint">+ add your own</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="label">Matches your theme</span>
+    <span class="swatches" id="swatches"></span>
+    <span class="note">prototype, real UI comes next</span>
+  </div>
+</div>
+
+<script>
+  var DATA = {
+    grind: { name: "Deep work", lines: [
+      "You don't have to feel like it. You just have to start. Open the file.",
+      "Ten minutes. That's the deal. Ten minutes and you can stop. You won't want to.",
+      "Tired is a feeling, not a verdict. One more push.",
+      "Future you is watching. Give them something to thank you for.",
+      "Done beats perfect. Ship the ugly version, fix it after.",
+      "The hard part is the chair. You're already in it. Begin."
+    ]},
+    gym: { name: "Training", lines: [
+      "You never regret the session you showed up for. Only the one you skipped.",
+      "Your body can. It's your head that's negotiating. Overrule it.",
+      "The version of you that trained today is the one you like. Go be them.",
+      "It's meant to be hard. That's the whole point of it.",
+      "You're not too tired. You're not warmed up yet."
+    ]},
+    fuel: { name: "Eat well", lines: [
+      "Food is fuel, not the enemy. Give yourself something good.",
+      "One decent meal is a win. You don't need a perfect week.",
+      "Be kind to yourself here. Progress, not punishment.",
+      "You're allowed to enjoy it. Balance, not guilt."
+    ]},
+    reset: { name: "Rough day", lines: [
+      "I know you're tired. Let's just do the next small thing.",
+      "Bad days end. You've got a 100% record of getting through them.",
+      "Rest is allowed. Quitting on yourself isn't. There's a difference.",
+      "One thing. Pick one thing and do it. That's enough for now.",
+      "You've survived every worst day so far. The record stands."
+    ]}
+  };
+  var ACCENTS = [
+    { name: "Ember",  a: "#e8933a", ink: "#120d06" },
+    { name: "Cyan",   a: "#4bc6d6", ink: "#04181c" },
+    { name: "Lime",   a: "#9ad152", ink: "#0f1705" },
+    { name: "Rose",   a: "#e8617f", ink: "#1c060c" }
+  ];
+
+  var lineEl = document.getElementById("line");
+  var chipsEl = document.getElementById("chips");
+  var swEl = document.getElementById("swatches");
+  var card = document.getElementById("card");
+  var active = "grind";
+  var last = lineEl.textContent;
+
+  function pick(cat) {
+    var lines = DATA[cat].lines, next = last;
+    if (lines.length === 1) { next = lines[0]; }
+    else { while (next === last) next = lines[Math.floor(Math.random() * lines.length)]; }
+    last = next;
+    lineEl.textContent = next;
+    lineEl.classList.remove("swap"); void lineEl.offsetWidth; lineEl.classList.add("swap");
+  }
+
+  function buildChips() {
+    Object.keys(DATA).forEach(function (k) {
+      var b = document.createElement("button");
+      b.className = "chip" + (k === active ? " on" : "");
+      b.textContent = DATA[k].name;
+      b.onclick = function () {
+        active = k;
+        [].forEach.call(chipsEl.children, function (c) { c.classList.remove("on"); });
+        b.classList.add("on");
+        pick(k);
+      };
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function buildSwatches() {
+    ACCENTS.forEach(function (s, i) {
+      var d = document.createElement("span");
+      d.className = "sw" + (i === 0 ? " on" : "");
+      d.style.background = s.a;
+      d.title = s.name;
+      d.onclick = function () {
+        document.documentElement.style.setProperty("--accent", s.a);
+        document.documentElement.style.setProperty("--accent-ink", s.ink);
+        [].forEach.call(swEl.children, function (c) { c.classList.remove("on"); });
+        d.classList.add("on");
+      };
+      swEl.appendChild(d);
+    });
+  }
+
+  document.getElementById("again").onclick = function () { pick(active); };
+  var btn = document.getElementById("gritbtn");
+  btn.onclick = function () {
+    var open = !card.hidden;
+    card.hidden = open;
+    btn.classList.toggle("live", !open);
+    if (!open) { card.classList.remove("enter"); void card.offsetWidth; card.classList.add("enter"); }
+  };
+  function closeCard() { card.hidden = true; btn.classList.remove("live"); }
+  document.getElementById("closex").onclick = closeCard;
+  document.getElementById("closex").onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") closeCard(); };
+
+  // live-ish clock in the mock bar
+  function tick() {
+    var d = new Date();
+    document.getElementById("clock").textContent =
+      String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  tick(); setInterval(tick, 10000);
+
+  buildChips();
+  buildSwatches();
+</script>

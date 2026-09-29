@@ -1,0 +1,194 @@
+// Model.js  -  Grit content and selection logic.
+//
+// Pure JavaScript, no QML or Qt, so it can be reasoned about and unit-tested
+// on its own (the same pattern the built-in clock plugin uses). The QML
+// imports this as `Model`. Generated from data/lines.json; keep that file as
+// the human-readable master and regenerate this if it changes.
+
+var CATEGORIES = [
+  {
+    id: "grind",
+    name: "Deep work",
+    lines: [
+      "You don't have to feel like it. You just have to start. Open the file.",
+      "Ten minutes. That's the deal. Ten minutes and you can stop. You won't want to.",
+      "Tired is a feeling, not a verdict. One more push.",
+      "Future you is watching. Give them something to thank you for.",
+      "Done beats perfect. Ship the ugly version, fix it after.",
+      "The hard part is the chair. You're already in it. Begin.",
+      "You've done harder than this on worse days. Go.",
+      "Nobody's coming to do it for you, and that's the good news. It's yours.",
+      "Close the tabs. You know which ones. Now the work has your whole head.",
+      "Motivation turns up after you start, not before. Start anyway.",
+      "One task. Not the list, the top of it. Just that.",
+      "The work you're avoiding is usually the work that matters. Do that one.",
+      "Slow progress is still the door closing behind everyone who quit.",
+      "You don't need a better plan. You need the next line of it done.",
+    ]
+  },
+  {
+    id: "gym",
+    name: "Training",
+    lines: [
+      "You never regret the session you showed up for. Only the one you skipped.",
+      "Turn up. Half a session beats the sofa every time.",
+      "Your body can. It's your head that's negotiating. Overrule it.",
+      "Slow reps still count. Just start moving.",
+      "The version of you that trained today is the one you like. Go be them.",
+      "It's meant to be hard. That's the whole point of it.",
+      "You're not too tired. You're not warmed up yet.",
+      "Discipline is just remembering what you want. You know what you want.",
+      "Nobody ever got weaker walking into the gym unsure. Go in unsure.",
+      "The last rep is the one that changes you. Earn it.",
+      "You can rest at the top of the hill. Not the bottom.",
+      "Bad workout, good habit. Both are true. The habit wins.",
+      "Leave it all in here so it's not rattling round your head out there.",
+      "Show up for the body that carries you every single day.",
+    ]
+  },
+  {
+    id: "fuel",
+    name: "Eat well",
+    lines: [
+      "Food is fuel, not the enemy. Give yourself something good.",
+      "One decent meal is a win. You don't need a perfect week.",
+      "Drink some water first. Half the time that's all it was.",
+      "Be kind to yourself here. Progress, not punishment.",
+      "A good plate now beats a strict plan you'll drop by Friday.",
+      "You're allowed to enjoy it. Balance, not guilt.",
+      "Look after the body doing all this work for you. It's on your side.",
+      "Small and steady wins this one. No all or nothing.",
+      "Eat like you actually like yourself. That's the whole trick.",
+      "Cook the thing. It's nearly always faster than you fear.",
+      "One good choice doesn't need a perfect day around it to count.",
+      "Fuel the session, fuel the work. Your body's not a battle.",
+      "Hungry, tired, or flat? Sort the food first, then decide.",
+      "Kindness on the plate is still kindness. Give yourself some.",
+    ]
+  },
+  {
+    id: "reset",
+    name: "Rough day",
+    lines: [
+      "I know you're tired. Let's just do the next small thing.",
+      "Bad days end. You've got a 100% record of getting through them.",
+      "You don't have to carry all of it right now. Just the next hour.",
+      "Rest is allowed. Quitting on yourself isn't. There's a difference.",
+      "Breathe. Shoulders down. You're doing better than you think.",
+      "One thing. Pick one thing and do it. That's enough for now.",
+      "You've survived every worst day so far. The record stands.",
+      "Be as kind to yourself as you'd be to a mate saying this to you.",
+      "Lower the bar to just getting through today. That's a real target.",
+      "It's a hard day, not a hard life. Don't let the day tell you otherwise.",
+      "Text someone. You don't have to do the heavy bit on your own.",
+      "Nothing's broken that a night's sleep and a fresh start can't dent.",
+      "You're allowed to just hold steady today. Steady is a win.",
+      "If all you do is not give up, that counts. Genuinely.",
+    ]
+  },
+  {
+    id: "morning",
+    name: "Start the day",
+    lines: [
+      "Feet on the floor. The rest is just momentum from there.",
+      "Win the morning and the day stops arguing with you.",
+      "Make the bed. First thing done, and the day owes you nothing yet.",
+      "You don't have to be ready. You have to be up.",
+      "Coffee, then move. Thinking about it is the slow way.",
+      "The version of today you want starts in the next ten minutes.",
+      "Don't check the phone yet. The day's yours before it's theirs.",
+      "One glass of water and one clear plan. That's a strong open.",
+      "Yesterday's done, filed, gone. This one's clean paper.",
+      "Get the hardest thing while your head's still fresh. Do it first.",
+      "Nobody feels amazing at this hour. Start moving, the feeling follows.",
+      "Small start beats no start. Just pick the first thing up.",
+      "Set today's one thing now, before the noise gets a vote.",
+      "Up, moving, going. You can think about how you feel at lunch.",
+    ]
+  },
+  {
+    id: "consistency",
+    name: "Keep going",
+    lines: [
+      "You're not behind. You're just mid-way through the boring part.",
+      "The magic is showing up on the days you don't want to. Like today.",
+      "Consistent beats intense. Turn up again.",
+      "Nobody sees the reps. Everybody sees the result. Do the reps.",
+      "You've come too far to only come this far.",
+      "Boring and steady is how the impressive stuff actually gets built.",
+      "Don't break the chain. One more day on the board.",
+      "Small things, every day, quietly become the thing you're proud of.",
+      "Momentum is fragile. Protect it. Do the little bit today.",
+      "The plan only works if you keep turning up to it. So turn up.",
+      "You don't have to be fast. You have to keep going.",
+      "Every day you don't quit, you get harder to beat.",
+      "Discipline is choosing what you want most over what you want now.",
+      "Keep stacking days. That's the whole secret, there isn't another one.",
+    ]
+  },
+  {
+    id: "setback",
+    name: "Setbacks",
+    lines: [
+      "It didn't work. That's data, not a verdict. Go again.",
+      "You're allowed a bad result. You're not allowed to stop there.",
+      "Failed once is not failed. It's the first draft of getting it right.",
+      "Lick the wounds, then get up. They heal on the way up anyway.",
+      "Everyone you admire has a stack of these behind them. Add yours.",
+      "The setback is the tuition. Learn the lesson it charged you for.",
+      "Down is not out. Check the scoreboard, not the last play.",
+      "You've been knocked back before and you're still here. Notice that.",
+      "Fix what you can, forget what you can't, and move.",
+      "It stung because you cared. Good. Care again tomorrow.",
+      "The comeback is more interesting than the setback anyway. Write it.",
+      "One bad chapter isn't the book. Keep turning the pages.",
+      "Get specific about what went wrong, then let the rest of it go.",
+      "Falling down is an event. Staying down is a decision. Decide well.",
+    ]
+  },
+  {
+    id: "doubt",
+    name: "Self-doubt",
+    lines: [
+      "The voice saying you can't has been wrong before. It's wrong now.",
+      "Feeling like a fraud usually means you're doing something that matters.",
+      "You don't have to believe you can. Just try before you decide.",
+      "Confidence comes after the evidence. Go and get the evidence.",
+      "Compare yourself to yesterday's you, not to someone's highlight reel.",
+      "You're more capable than your worst day tells you. Ask a good day.",
+      "Doubt is allowed in the room. It just doesn't get a vote.",
+      "Everyone's winging it. The ones who win just wing it and keep going.",
+      "You've done hard things you once thought you couldn't. This is one more.",
+      "Nobody's watching as closely as you fear. Just do the thing.",
+      "Being scared and doing it anyway is the entire definition of brave.",
+      "High standards aren't proof you're falling short. They're why you're good.",
+      "The imposter feeling never fully leaves. Winners just bring it along.",
+      "Start before you feel ready. Ready is something you build, not wait for.",
+    ]
+  }
+]
+
+// Every line across all categories, for the default 'surprise me' pool.
+function allLines() {
+  var out = []
+  for (var i = 0; i < CATEGORIES.length; i++) out = out.concat(CATEGORIES[i].lines)
+  return out
+}
+
+function linesFor(id) {
+  for (var i = 0; i < CATEGORIES.length; i++)
+    if (CATEGORIES[i].id === id) return CATEGORIES[i].lines
+  return []
+}
+
+// A random line from `lines`, never equal to `last`. Returns the only line
+// when there is just one, and "" when the list is empty.
+function pick(lines, last) {
+  if (!lines || lines.length === 0) return ""
+  if (lines.length === 1) return lines[0]
+  var next = last, guard = 0
+  while (next === last && guard < 50) { next = lines[Math.floor(Math.random() * lines.length)]; guard++ }
+  return next
+}
+
+if (typeof module !== "undefined") module.exports = { CATEGORIES: CATEGORIES, allLines: allLines, linesFor: linesFor, pick: pick }

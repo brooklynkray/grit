@@ -1,0 +1,7 @@
+# Editor and OS noise
+*.swp
+*~
+.DS_Store
+
+# Local user data must never be committed (it belongs on the user's machine)
+custom.json

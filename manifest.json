@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "brooklynkray.grit",
+  "name": "Grit",
+  "version": "0.1.0",
+  "author": "Brooklyn Kray",
+  "description": "A no-nonsense motivation boost, one line at a time.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Grit",
+    "description": "A no-nonsense motivation boost, one line at a time.",
+    "category": "Wellbeing",
+    "allowMultiple": false
+  }
+}
