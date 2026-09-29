@@ -4,6 +4,8 @@ A no-nonsense motivation plugin for Omarchy. Click it when you need a push, and 
 
 Grit lives in your bar. Press it and a small card appears with a line from whichever category you're in. The voice is firm and real, someone in your corner who actually wants you to move, not an inspirational poster.
 
+![The Grit panel](docs/preview.png)
+
 ## The point of Grit: make it yours
 
 This is the bit that matters, so it's first.
