@@ -4,14 +4,14 @@
   "name": "Grit",
   "version": "0.1.0",
   "author": "Brooklyn Kray",
-  "description": "A no-nonsense motivation boost, one line at a time.",
+  "description": "Powerful, no-nonsense motivation, one tap away in your bar. Grit comes with a strong set of firm, honest lines to get you moving, but here's the real point: what actually fires you up is personal. That quote you saved, a line from someone you admire, your own style of motivation, add them in and you've built the one place that hits every single time.",
   "kinds": ["bar-widget"],
   "entryPoints": {
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
     "displayName": "Grit",
-    "description": "A no-nonsense motivation boost, one line at a time.",
+    "description": "Powerful, no-nonsense motivation, one tap away in your bar. Grit comes with a strong set of firm, honest lines to get you moving, but here's the real point: what actually fires you up is personal. That quote you saved, a line from someone you admire, your own style of motivation, add them in and you've built the one place that hits every single time.",
     "category": "Wellbeing",
     "allowMultiple": false
   }
